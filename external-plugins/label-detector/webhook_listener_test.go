@@ -109,6 +109,14 @@ func TestWebhookListener(t *testing.T) {
 
 		changedFiles := getChangedGoFiles(org, repo, event.PullRequest.Number)
 
+		// Convert to absolute paths for matching with DryRun output
+		absChangedFiles := make(map[string]bool)
+		for relPath := range changedFiles {
+			absPath := filepath.Join(repoDir, relPath)
+			absChangedFiles[absPath] = true
+		}
+		changedFiles = absChangedFiles
+
 		// Checkout base and run DryRun
 		if err := repoClient.Checkout(baseSHA); err != nil {
 			fmt.Printf("Failed to checkout base SHA: %v\n", err)
