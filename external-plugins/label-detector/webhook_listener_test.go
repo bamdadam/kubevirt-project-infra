@@ -91,13 +91,10 @@ func TestWebhookListener(t *testing.T) {
 		headSHA := event.PullRequest.Head.SHA
 
 		fmt.Println("\n" + sep)
-		fmt.Println("CLONING REPO (sparse: tests/ only)")
+		fmt.Println("CLONING REPO")
 		fmt.Println(sep)
 
-		// Clone with sparse checkout
-		repoClient, err := gitClientFactory.ClientForWithRepoOpts(org, repo, gitv2.RepoOpts{
-			SparseCheckoutDirs: []string{"tests"},
-		})
+		repoClient, err := gitClientFactory.ClientFor(org, repo)
 		if err != nil {
 			fmt.Printf("Failed to create repo client: %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
