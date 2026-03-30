@@ -1,0 +1,9 @@
+FROM quay.io/kubevirtci/golang:1.21
+
+WORKDIR /workspace
+
+COPY . .
+
+RUN go build -o label-detector ./plugin/main.go ./plugin/conformance_detector.go
+
+ENTRYPOINT ["/workspace/label-detector"]
