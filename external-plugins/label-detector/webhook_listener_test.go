@@ -101,7 +101,7 @@ func TestWebhookListener(t *testing.T) {
 			return
 		}
 
-		repoDir := filepath.Join(repoClient.Directory(), "tests")
+		repoDir := repoClient.Directory()
 
 		fmt.Println("\n" + sep)
 		fmt.Println("CONFORMANCE TEST DETECTION VIA DRY RUN")
