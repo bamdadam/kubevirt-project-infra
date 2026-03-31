@@ -31,6 +31,8 @@ func TestWebhookListener(t *testing.T) {
 		t.Fatalf("Failed to create git client factory: %v", err)
 	}
 
+	defer gitClientFactory.Clean()
+
 	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -101,8 +103,9 @@ func TestWebhookListener(t *testing.T) {
 			return
 		}
 
-		repoDir := repoClient.Directory()
+		defer repoClient.Clean()
 
+		repoDir := repoClient.Directory()
 		fmt.Println("\n" + sep)
 		fmt.Println("CONFORMANCE TEST DETECTION VIA DRY RUN")
 		fmt.Println(sep)
