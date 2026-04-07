@@ -127,7 +127,10 @@ func TestWebhookListener(t *testing.T) {
 			return
 		}
 
-		baseSpecs, _ := getConformanceSpecs(repoDir)
+		baseSpecs, err := getConformanceSpecs(filepath.Join(repoDir, "tests"))
+		if err != nil {
+			fmt.Printf("Failed to get conformance specs: %v\n", err)
+		}
 		baseSpecs = filterSpecsByChangedFiles(baseSpecs, changedFiles)
 		baseOutlines := parseChangedTestFiles(repoDir, changedFiles)
 		baseSourceFiles := readChangedSourceFiles(repoDir, changedFiles)
@@ -147,7 +150,7 @@ func TestWebhookListener(t *testing.T) {
 			return
 		}
 
-		headSpecs, err := getConformanceSpecs(repoDir)
+		headSpecs, err := getConformanceSpecs(filepath.Join(repoDir, "tests"))
 		if err != nil {
 			fmt.Printf("Failed to get conformance specs: %v\n", err)
 		}
@@ -294,10 +297,10 @@ func parseChangedTestFiles(testDir string, changedFiles map[string]bool) map[str
 	outlines := make(map[string][]*ginkgo.Node)
 
 	for changedFile := range changedFiles {
-		fullPath := filepath.Join(testDir, changedFile)
-		nodes, err := ginkgo.OutlineFromFile(fullPath)
+		//fullPath := filepath.Join(testDir, changedFile)
+		nodes, err := ginkgo.OutlineFromFile(changedFile)
 		if err == nil {
-			outlines[fullPath] = nodes
+			outlines[changedFile] = nodes
 		}
 	}
 
@@ -308,10 +311,10 @@ func readChangedSourceFiles(testDir string, changedFiles map[string]bool) map[st
 	sources := make(map[string][]byte)
 
 	for changedFile := range changedFiles {
-		fullPath := filepath.Join(testDir, changedFile)
-		content, err := os.ReadFile(fullPath)
+		//fullPath := filepath.Join(testDir, changedFile)
+		content, err := os.ReadFile(changedFile)
 		if err == nil {
-			sources[fullPath] = content
+			sources[changedFile] = content
 		}
 	}
 
@@ -323,6 +326,22 @@ func isSpecModified(baseSpec, headSpec types.SpecReport, baseSourceFiles, headSo
 	headHash := getSourceHashForSpec(headSpec, headSourceFiles, headOutlineNodeMaps)
 
 	if baseHash != headHash {
+		filename := baseSpec.LeafNodeLocation.FileName
+		source, _ := baseSourceFiles[filename]
+		outlineNodeMap, _ := baseOutlineNodeMaps[filename]
+		node, _ := outlineNodeMap[baseSpec.FullText()]
+		nodeCode := source[node.Start:node.End]
+		//fmt.Println(string(nodeCode))
+		fmt.Println(nodeCode)
+		fmt.Println(sep)
+		filename = headSpec.LeafNodeLocation.FileName
+		source, _ = headSourceFiles[filename]
+		outlineNodeMap, _ = headOutlineNodeMaps[filename]
+		node, _ = outlineNodeMap[headSpec.FullText()]
+		nodeCode = source[node.Start:node.End]
+		//fmt.Println(string(nodeCode))
+		fmt.Println(nodeCode)
+		fmt.Println(sep)
 		return true
 	}
 
@@ -351,7 +370,9 @@ func getSourceHashForSpec(spec types.SpecReport, sourceFiles map[string][]byte, 
 	}
 
 	nodeCode := source[node.Start:node.End]
-	hash := md5.Sum(nodeCode)
+	normalizedCode := strings.TrimSpace(string(nodeCode))
+	normalizedCode = strings.Join(strings.Fields(normalizedCode), " ")
+	hash := md5.Sum([]byte(normalizedCode))
 	return fmt.Sprintf("%x", hash)
 }
 
